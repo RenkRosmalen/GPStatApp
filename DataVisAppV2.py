@@ -13,8 +13,8 @@ st.title("Esports Datateam Visualisation Tool")
 # Navigation Tabs
 # -------------------------
 tabs = st.tabs([
-    "📂 Single Dataset Analysis",
-    "📊 Comparative T-test (Two Datasets)"
+    "Single Dataset Analysis",
+    "Comparative T-test (Two Datasets)"
 ])
 
 # =========================
@@ -35,7 +35,7 @@ with tabs[0]:
         # Descriptive Stats
         # -------------------------
         st.sidebar.header("2. Descriptive Statistics")
-        st.subheader("📈 Descriptive Statistics")
+        st.subheader("Descriptive Statistics")
         selected_col = st.selectbox("Select a column for statistics", numeric_cols)
         if selected_col:
             desc = df[selected_col].describe()
@@ -51,7 +51,7 @@ with tabs[0]:
         # Frequency / % Change
         # -------------------------
         st.sidebar.header("3. Visualize Frequency / % Change")
-        st.subheader("📊 Frequency or Trend Plot")
+        st.subheader("Frequency or Trend Plot")
         time_col = st.selectbox("Time/Match Column (for trend)", df.columns)
         value_col = st.selectbox("Numeric Column (for % change)", numeric_cols)
 
@@ -65,141 +65,6 @@ with tabs[0]:
 
             fig_change = px.bar(trend_df, x=time_col, y="% Change", title=f"% Change in {value_col}")
             st.plotly_chart(fig_change, use_container_width=True)
-
-        # -------------------------
-        # Inferential Stats
-        # -------------------------
-        st.sidebar.header("4. Statistical Tests")
-        st.subheader("🧪 Inferential Analysis")
-
-        stat_test = st.selectbox("Select a test", ["T-test", "Correlation", "Chi-square"])
-
-        if stat_test == "T-test":
-            test_type = st.radio("Select T-test type", ["Independent T-test", "Paired T-test"])
-
-            if test_type == "Independent T-test":
-                group_col = st.selectbox("Group column (2 categories)", df.columns)
-                test_col = st.selectbox("Numeric column", numeric_cols)
-
-                if group_col and test_col:
-                    groups = df[group_col].dropna().unique()
-                    if len(groups) == 2:
-                        data1 = df[df[group_col] == groups[0]][test_col]
-                        data2 = df[df[group_col] == groups[1]][test_col]
-                        t_stat, p_val = stats.ttest_ind(data1, data2, equal_var=False)
-                        st.write(f"**T-test between {groups[0]} and {groups[1]}**")
-                        st.write(f"t-statistic = {t_stat:.4f}, p-value = {p_val:.4f}")
-
-                        # Cohen’s d
-                        mean1, mean2 = data1.mean(), data2.mean()
-                        pooled_std = np.sqrt(((data1.std() ** 2) + (data2.std() ** 2)) / 2)
-                        cohens_d = (mean1 - mean2) / pooled_std
-                        st.write(f"**Effect Size (Cohen’s d):** {cohens_d:.3f}")
-
-                        if abs(cohens_d) < 0.2:
-                            effect_label = "negligible"
-                        elif abs(cohens_d) < 0.5:
-                            effect_label = "small"
-                        elif abs(cohens_d) < 0.8:
-                            effect_label = "medium"
-                        else:
-                            effect_label = "large"
-                        st.write(f"This indicates a **{effect_label}** effect size.")
-
-                        # Interpretation
-                        alpha = 0.05
-                        if p_val < alpha:
-                            st.success(
-                                f"✅ The difference between {groups[0]} and {groups[1]} is **statistically significant** "
-                                f"(p < {alpha}). This suggests {test_col} differs meaningfully between the two groups."
-                            )
-                        else:
-                            st.info(
-                                f"ℹ️ The difference between {groups[0]} and {groups[1]} is **not statistically significant** "
-                                f"(p = {p_val:.4f} ≥ {alpha}). There’s not enough evidence to say {test_col} differs between groups."
-                            )
-
-            elif test_type == "Paired T-test":
-                st.write("Upload **two datasets** with the same participants (before/after or condition A/B).")
-                file1 = st.file_uploader("Dataset 1 (e.g., Before)", type="csv", key="paired1")
-                file2 = st.file_uploader("Dataset 2 (e.g., After)", type="csv", key="paired2")
-
-                if file1 and file2:
-                    df1 = pd.read_csv(file1)
-                    df2 = pd.read_csv(file2)
-
-                    # Auto-handle duplicate column names
-                    df1 = df1.loc[:, ~df1.columns.duplicated()]
-                    df2 = df2.loc[:, ~df2.columns.duplicated()]
-
-                    common_cols = [c for c in df1.columns if
-                                   c in df2.columns and df1[c].dtype in [np.float64, np.int64]]
-                    test_col = st.selectbox("Numeric column to compare", common_cols)
-
-                    if test_col:
-                        data1, data2 = df1[test_col], df2[test_col]
-                        t_stat, p_val = stats.ttest_rel(data1, data2)
-                        st.write(f"**Paired T-test on {test_col}**")
-                        st.write(f"t-statistic = {t_stat:.4f}, p-value = {p_val:.4f}")
-
-                        # Cohen’s d for paired samples
-                        diff = data1 - data2
-                        cohens_d = diff.mean() / diff.std(ddof=1)
-                        st.write(f"**Effect Size (Cohen’s d):** {cohens_d:.3f}")
-
-                        if abs(cohens_d) < 0.2:
-                            effect_label = "negligible"
-                        elif abs(cohens_d) < 0.5:
-                            effect_label = "small"
-                        elif abs(cohens_d) < 0.8:
-                            effect_label = "medium"
-                        else:
-                            effect_label = "large"
-                        st.write(f"This indicates a **{effect_label}** effect size.")
-
-                        # Interpretation
-                        alpha = 0.05
-                        if p_val < alpha:
-                            st.success(
-                                f"✅ The change in **{test_col}** between the two conditions is **statistically significant** "
-                                f"(p < {alpha}). This suggests a meaningful difference between datasets."
-                            )
-                        else:
-                            st.info(
-                                f"ℹ️ The change in **{test_col}** is **not statistically significant** "
-                                f"(p = {p_val:.4f} ≥ {alpha}). There’s no clear evidence of a difference between conditions."
-                            )
-
-
-        elif stat_test == "Correlation":
-            col1 = st.selectbox("Column 1", numeric_cols)
-            col2 = st.selectbox("Column 2", numeric_cols, index=1 if len(numeric_cols) > 1 else 0)
-
-            if col1 and col2:
-                corr, p = stats.pearsonr(df[col1].dropna(), df[col2].dropna())
-                st.write(f"**Correlation between {col1} and {col2}:** r = {corr:.4f}, p = {p:.4f}")
-                fig = px.scatter(df, x=col1, y=col2, trendline="ols")
-                st.plotly_chart(fig, use_container_width=True)
-
-        elif stat_test == "Chi-square":
-            cat_cols = df.select_dtypes(include='object').columns.tolist()
-            if len(cat_cols) >= 2:
-                cat1 = st.selectbox("Categorical Column 1", cat_cols)
-                cat2 = st.selectbox("Categorical Column 2", cat_cols[::-1])
-
-                if cat1 and cat2:
-                    contingency = pd.crosstab(df[cat1], df[cat2])
-                    chi2, p, dof, expected = stats.chi2_contingency(contingency)
-                    st.write(f"Chi-square statistic: {chi2:.4f}, p-value: {p:.4f}")
-                    st.write("Contingency Table:")
-                    st.dataframe(contingency)
-
-        # -------------------------
-        # Qualitative Placeholder
-        # -------------------------
-        st.sidebar.header("5. (Optional) Qualitative Themes")
-        st.subheader("Theme & Subtheme Visuals (Coming Soon)")
-        st.markdown("This section could visualize coded qualitative data like quotes, themes, and subthemes using a tree diagram or card grid.")
 
     else:
         st.info("Upload a CSV file to get started.")
@@ -217,7 +82,7 @@ with tabs[1]:
         df1 = pd.read_csv(file1)
         df2 = pd.read_csv(file2)
 
-        st.subheader("📁 Data Previews")
+        st.subheader("Data Previews")
         st.write("**Dataset 1 Preview:**")
         st.dataframe(df1.head())
         st.write("**Dataset 2 Preview:**")
@@ -242,26 +107,56 @@ with tabs[1]:
                     if len(data1) == len(data2):
                         t_stat, p_val = stats.ttest_rel(data1, data2)
                         test_type = "Paired T-test"
+                        # Cohen's d for paired samples
+                        diff = data1 - data2
+                        cohens_d = diff.mean() / diff.std(ddof=1)
                     else:
                         st.warning("Paired T-test requires datasets of equal length (same participants).")
-                        t_stat = p_val = None
+                        t_stat = p_val = cohens_d = None
                 else:
                     t_stat, p_val = stats.ttest_ind(data1, data2, equal_var=False)
                     test_type = "Independent T-test"
+                    # Cohen's d for independent samples
+                    n1, n2 = len(data1), len(data2)
+                    pooled_std = np.sqrt(((n1 - 1)*np.var(data1, ddof=1) + (n2 - 1)*np.var(data2, ddof=1)) / (n1 + n2 - 2))
+                    cohens_d = (np.mean(data1) - np.mean(data2)) / pooled_std
 
                 if t_stat is not None:
-                    st.subheader(f"🧪 {test_type} Results")
+                    st.subheader(f"{test_type} Results")
                     st.write(f"**Test on '{test_col}'**")
                     st.write(f"t-statistic = {t_stat:.4f}")
                     st.write(f"p-value = {p_val:.4f}")
 
+                    # Determine significance
+                    alpha = 0.05
+                    if p_val < alpha:
+                        st.success(f"✅ The difference is statistically **significant** (p < {alpha}).")
+                    else:
+                        st.info(f"❌ The difference is **not statistically significant** (p ≥ {alpha}).")
+
+                    # Interpret Cohen's d
+                    if cohens_d is not None:
+                        st.write(f"**Cohen’s d = {cohens_d:.3f}**")
+
+                        if abs(cohens_d) < 0.2:
+                            effect = "negligible"
+                        elif abs(cohens_d) < 0.5:
+                            effect = "small"
+                        elif abs(cohens_d) < 0.8:
+                            effect = "medium"
+                        else:
+                            effect = "large"
+
+                        st.write(f"Effect size interpretation: **{effect.capitalize()} effect**")
+
+                    # Summary metrics
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Mean (Dataset 1)", f"{np.mean(data1):.2f}")
-                        st.metric("Std Dev (Dataset 1)", f"{np.std(data1):.2f}")
+                        st.metric("Std Dev (Dataset 1)", f"{np.std(data1, ddof=1):.2f}")
                     with col2:
                         st.metric("Mean (Dataset 2)", f"{np.mean(data2):.2f}")
-                        st.metric("Std Dev (Dataset 2)", f"{np.std(data2):.2f}")
+                        st.metric("Std Dev (Dataset 2)", f"{np.std(data2, ddof=1):.2f}")
 
                     # Visualization
                     compare_df = pd.DataFrame({
