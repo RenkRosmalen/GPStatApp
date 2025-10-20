@@ -1,0 +1,11 @@
+MatchID,Player,Role,EarlyGameCS,GoldAt15,Win,Strategy,GamePhase
+001,Alice,Jungle,45,3800,1,Tempo,Early
+002,Bob,Jungle,39,3500,0,Scaling,Early
+003,Charlie,Top,48,3900,1,Tempo,Late
+004,Dan,Mid,42,3700,1,Scaling,Mid
+005,Eve,ADC,50,4000,0,Tempo,Mid
+006,Frank,Support,20,2500,0,Scaling,Late
+007,Grace,Jungle,44,3600,1,Tempo,Early
+008,Hank,Top,47,3850,1,Scaling,Mid
+009,Ivy,Mid,41,3650,0,Tempo,Late
+010,Jack,ADC,49,3950,1,Scaling,Early
